@@ -133,7 +133,7 @@ $("#task-form-modal .btn-primary").click(function() {
 // END OF THE ABILITY TO EDIT TASK'S TEXT
 
 // BEGINNING OF ABILITY TO EDIT TASK DATES
-  // due date was clicked
+// due date was clicked
 $(".list-group").on("click", "span", function() {
   // get current text
   var date = $(this)
@@ -152,7 +152,7 @@ $(".list-group").on("click", "span", function() {
   dateInput.trigger("focus");
 });
 
-  // value of due date was changed
+// value of due date was changed
 $(".list-group").on("blur", "input[type='text']", function() {
   var date = $(this).val();
 
@@ -175,8 +175,85 @@ $(".list-group").on("blur", "input[type='text']", function() {
     .text(date);
     $(this).replaceWith(taskSpan);
 });
-
 // END OF ABILITY TO EDIT TASK DATES
+
+// turning the columns into sortables
+$(".card .list-group").sortable({
+  connectWith: $(".card .list-group"),
+  scroll: false,
+  tolerance: "pointer",
+  /* helper: "clone" to create a copy of the dragged element and move the copy instead of the original.
+    This is necessary to prevent click events from accidentally triggering on the original element*/
+  helper: "clone",
+
+  // the activate and deactivate events trigger once for all connected lists as soon as dragging starts and stops
+  activate: function(event) {
+    //console.log("activate", this);
+  },
+  deactive: function(event) {
+    //console.log("deactivate", this);
+  },
+
+  // over and out events trigger when a dragged item enters or leaves a connected list
+  over: function(event) {
+    //console.log("over", event.target);
+  },
+  out: function(event) {
+    //console.log("out", event.target);
+  },
+
+  // update event triggers when the contents of a list have changed (e.g., the items were re-ordered, removed or added)
+  update: function(event) {
+    //array to store the task data in
+    var tempArr = [];
+    //loop over current set of children on sortable list
+    // each() method will run a callback function for every item/element in the array
+    // the children method returns an array of the list element's children (the <li> elements, labeled as li.list-group-item)
+    $(this).children().each(function() {
+      var text = $(this)
+        .find("p")
+        .text()
+        .trim();
+
+      var date = $(this)
+        .find("span")
+        .text()
+        .trim();
+
+      // add task data to the temp array as a object
+      tempArr.push({
+        text: text,
+        date: date
+      });
+    });
+    
+    // trim down list's ID to match object property 
+    var arrName = $(this)
+      .attr("id")
+      .replace("list-", "");
+
+    // update array on tasks object and save
+    tasks[arrName] = tempArr;
+    saveTasks();
+  }
+});
+
+// convert trash into a droppable
+$("#trash").droppable({
+  accept: ".card .list-group-item",
+  tolerance: "touch",
+  drop: function(event, ui) {
+    console.log("drop");
+    ui.draggable.remove();
+  },
+  over: function(event, ui) {
+    console.log("over");
+  },
+  out: function(event, ui) {
+    console.log("out");
+  }
+});
+
 
 // remove all tasks
 $("#remove-tasks").on("click", function() {
