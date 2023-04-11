@@ -13,6 +13,8 @@ var createTask = function(taskText, taskDate, taskList) {
   // append span and p element to parent li
   taskLi.append(taskSpan, taskP);
 
+  // check due date
+  auditTask(taskLi);
 
   // append to ul list on the page
   $("#list-" + taskList).append(taskLi);
@@ -77,6 +79,11 @@ $("#task-form-modal .btn-primary").click(function() {
 
     saveTasks();
   }
+});
+
+// Date picker
+$("#modalDueDate").datepicker({
+  minDate: 1 //set the key-value pair of minimum date to be 1 day from the current date
 });
 
 // BEGINNING OF THE ABILITY TO EDIT TASK'S TEXT 
@@ -148,12 +155,20 @@ $(".list-group").on("click", "span", function() {
   // swap out elements
   $(this).replaceWith(dateInput);
 
+  // enable jQuery UI datepicker
+  dateInput.datepicker({
+    minDate: 1,
+    onClose: function() {
+      //when calendar is closed, force a "change" event on the 'dateInput'
+      $(this).trigger("change");
+    }
+  });
   // automatically bring up the calendar
   dateInput.trigger("focus");
 });
 
 // value of due date was changed
-$(".list-group").on("blur", "input[type='text']", function() {
+$(".list-group").on("change", "input[type='text']", function() {
   var date = $(this).val();
 
   // get status type and position in the list
@@ -174,6 +189,9 @@ $(".list-group").on("blur", "input[type='text']", function() {
     .addClass("badge badge-primary badge-pill")
     .text(date);
     $(this).replaceWith(taskSpan);
+
+  // pass task's <li> element into auditTask() to check new due date
+  auditTask($(taskSpan).closest(".list-group-item"));
 });
 // END OF ABILITY TO EDIT TASK DATES
 
@@ -254,7 +272,6 @@ $("#trash").droppable({
   }
 });
 
-
 // remove all tasks
 $("#remove-tasks").on("click", function() {
   for (var key in tasks) {
@@ -263,6 +280,29 @@ $("#remove-tasks").on("click", function() {
   }
   saveTasks();
 });
+
+var auditTask = function(taskEl) {
+  // get date from task element
+  var date = $(taskEl).find("span").text().trim();
+
+  /* First, we use the date variable we created from taskEl to make a new Moment object, configured for the user's local time using moment(date, "L"). 
+  Because the date variable does not specify a time of day (for example, "11/23/2019"), the Moment object will default to 12:00am. 
+  Because work usually doesn't end at 12:00am, we convert it to 5:00pm of that day instead, using the .set("hour", 17) method. 
+  In this case, the value 17 is in 24-hour time, so it's 5:00pm. */
+  var time = moment(date,"L").set("hour", 17);
+
+  // remove any old classes from element
+  $(taskEl).removeClass("list-group-item-warning list-group-item-danger");
+
+  // apply new class if task is near/over due date
+  if(moment().isAfter(time)) {
+    $(taskEl).addClass("list-group-item-danger");
+  }
+  else if (Math.abs(moment().diff(time, "days")) <= 2 ) {
+    $(taskEl).addClass("list-group-item-warning");
+  }
+  
+};
 
 // load tasks for the first time
 loadTasks();
