@@ -60,7 +60,7 @@ $("#task-form-modal").on("shown.bs.modal", function() {
 });
 
 // save button in modal was clicked
-$("#task-form-modal .btn-primary").click(function() {
+$("#task-form-modal .btn-save").click(function() {
   // get form values
   var taskText = $("#modalTaskDescription").val();
   var taskDate = $("#modalDueDate").val();
@@ -205,19 +205,21 @@ $(".card .list-group").sortable({
   helper: "clone",
 
   // the activate and deactivate events trigger once for all connected lists as soon as dragging starts and stops
-  activate: function(event) {
-    //console.log("activate", this);
+  activate: function(event, ui) {
+    $(this).addClass("dropover");
+    $(".bottom-trash").addClass("bottom-trash-drag");
   },
-  deactive: function(event) {
-    //console.log("deactivate", this);
+  deactive: function(event, ui) {
+    $(this).removeClass("dropover");
+    $(".bottom-trash").addClass("bottom-trash-drag");
   },
 
   // over and out events trigger when a dragged item enters or leaves a connected list
   over: function(event) {
-    //console.log("over", event.target);
+    $(event.target).addClass("dropover-active");
   },
   out: function(event) {
-    //console.log("out", event.target);
+    $(event.target).removeClass("dropover-active");
   },
 
   // update event triggers when the contents of a list have changed (e.g., the items were re-ordered, removed or added)
@@ -261,13 +263,15 @@ $("#trash").droppable({
   accept: ".card .list-group-item",
   tolerance: "touch",
   drop: function(event, ui) {
-    console.log("drop");
+    $(".bottom-trash").addClass("bottom-trash-active");
     ui.draggable.remove();
   },
   over: function(event, ui) {
-    console.log("over");
+    $(".bottom-trash").addClass("bottom-trash-active");
+    console.log(ui);
   },
   out: function(event, ui) {
+    $(".bottom-trash").addClass("bottom-trash-active");
     console.log("out");
   }
 });
@@ -303,6 +307,13 @@ var auditTask = function(taskEl) {
   }
   
 };
+
+//schedule task auditing
+setInterval(function() {
+  $(".card .list-group-item").each(function(index, el){
+    auditTask(el);
+  });
+}, (1000 * 60) * 30);
 
 // load tasks for the first time
 loadTasks();
